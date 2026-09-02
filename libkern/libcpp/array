@@ -1,0 +1,84 @@
+#pragma once
+/* Freestanding <array> -- fixed-size array wrapper */
+
+#include <cstddef>
+#include <cstdint>
+
+namespace std {
+
+template <typename T, size_t N>
+struct array {
+    using value_type      = T;
+    using size_type       = size_t;
+    using difference_type = ptrdiff_t;
+    using pointer         = T *;
+    using const_pointer   = const T *;
+    using reference       = T &;
+    using const_reference = const T &;
+    using iterator        = T *;
+    using const_iterator  = const T *;
+
+    T data_[N];
+
+    constexpr size_t size() const noexcept { return N; }
+    constexpr bool   empty() const noexcept { return N == 0; }
+
+    constexpr reference operator[](size_t i) { return data_[i]; }
+    constexpr const_reference operator[](size_t i) const { return data_[i]; }
+
+    constexpr reference at(size_t i) { return data_[i]; }
+    constexpr const_reference at(size_t i) const { return data_[i]; }
+
+    constexpr reference front() { return data_[0]; }
+    constexpr const_reference front() const { return data_[0]; }
+
+    constexpr reference back() { return data_[N - 1]; }
+    constexpr const_reference back() const { return data_[N - 1]; }
+
+    constexpr pointer data() noexcept { return data_; }
+    constexpr const_pointer data() const noexcept { return data_; }
+
+    constexpr iterator begin() noexcept { return data_; }
+    constexpr const_iterator begin() const noexcept { return data_; }
+    constexpr const_iterator cbegin() const noexcept { return data_; }
+
+    constexpr iterator end() noexcept { return data_ + N; }
+    constexpr const_iterator end() const noexcept { return data_ + N; }
+    constexpr const_iterator cend() const noexcept { return data_ + N; }
+
+    constexpr void fill(const T &value) {
+        for (size_t i = 0; i < N; i++)
+            data_[i] = value;
+    }
+
+    constexpr void swap(array &other) noexcept {
+        for (size_t i = 0; i < N; i++) {
+            T tmp = data_[i];
+            data_[i] = other.data_[i];
+            other.data_[i] = tmp;
+        }
+    }
+};
+
+template <typename T, typename... Ts>
+array(T, Ts...) -> array<T, sizeof...(Ts) + 1>;
+
+template <size_t I, typename T, size_t N>
+constexpr T &get(array<T, N> &a) noexcept { return a.data_[I]; }
+
+template <size_t I, typename T, size_t N>
+constexpr const T &get(const array<T, N> &a) noexcept { return a.data_[I]; }
+
+template <typename T, size_t N>
+constexpr bool operator==(const array<T, N> &a, const array<T, N> &b) {
+    for (size_t i = 0; i < N; i++)
+        if (a[i] != b[i]) return false;
+    return true;
+}
+
+template <typename T, size_t N>
+constexpr bool operator!=(const array<T, N> &a, const array<T, N> &b) {
+    return !(a == b);
+}
+
+} // namespace std

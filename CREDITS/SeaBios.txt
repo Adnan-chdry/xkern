@@ -1,0 +1,79 @@
+===============================================================================
+SEABIOS - USB SUBSYSTEM REFERENCE NOTICE
+===============================================================================
+
+This project's USB implementation draws design inspiration from, and references
+concepts found in, the SeaBIOS project's USB subsystem.
+
+--------------------------------------------------------------------------------
+ACKNOWLEDGMENT
+--------------------------------------------------------------------------------
+
+SeaBIOS is an open-source legacy BIOS implementation which can be used as a
+coreboot payload [citation:4]. It implements standard BIOS calling interfaces
+for x86 systems.
+
+The USB subsystem in SeaBIOS was developed by:
+
+  Kevin O'Connor (primary author)
+  And many other SeaBIOS contributors
+
+The SeaBIOS project website:
+  http://www.coreboot.org/SeaBIOS
+
+SeaBIOS source repository:
+  https://git.seabios.org/seabios.git/
+
+--------------------------------------------------------------------------------
+LICENSE STATUS
+--------------------------------------------------------------------------------
+
+SeaBIOS is licensed under the GNU Lesser General Public License, version 3
+(LGPLv3) [citation:1][citation:3][citation:5].
+
+This project is inspired by SeaBIOS USB functionality including:
+
+  - USB EHCI controller support
+  - USB XHCI controller support
+  - USB MSC (Mass Storage Class) device support
+  - USB UAS (USB Attached SCSI) device support
+  - USB hub support including USB3 hubs [citation:2]
+  - USB drive boot support
+  - USB device enumeration and detection logic
+
+Full LGPLv3 license text available at:
+  https://www.gnu.org/licenses/lgpl-3.0.html
+
+--------------------------------------------------------------------------------
+DISCLAIMER
+--------------------------------------------------------------------------------
+
+THIS PROJECT DOES NOT CONTAIN OR DISTRIBUTE ANY CODE FROM THE SEABIOS PROJECT.
+
+The implementation in this project is an independent, clean-room
+implementation developed based on:
+
+  1. Publicly available USB specifications
+  2. High-level architectural concepts observed from SeaBIOS
+  3. Industry-standard USB driver design patterns
+
+No SeaBIOS source code has been copied, translated, or derived from
+in the creation of this project's USB subsystem.
+
+This project is NOT affiliated with, endorsed by, or sponsored by the
+SeaBIOS project, Kevin O'Connor, or any SeaBIOS contributors.
+
+--------------------------------------------------------------------------------
+PURPOSE OF THIS NOTICE
+--------------------------------------------------------------------------------
+
+This notice is provided to give proper attribution to the SeaBIOS project
+for their pioneering work in USB stack implementation in the BIOS/firmware
+space, which serves as an educational reference for embedded systems and
+firmware developers.
+
+--------------------------------------------------------------------------------
+Date: August 31, 2026
+Project: xkern
+Contact: <unimportant@for.now>
+--------------------------------------------------------------------------------

@@ -1,0 +1,170 @@
+#pragma once
+/* Freestanding <memory> -- UniquePtr, SharedPtr, make_unique, make_shared */
+
+#include <cstddef>
+#include "type_traits"
+
+namespace std {
+
+/* ================================================================== */
+/*  UniquePtr -- exclusive ownership smart pointer                      */
+/* ================================================================== */
+
+template <typename T>
+class UniquePtr {
+public:
+    constexpr UniquePtr() noexcept : ptr_(nullptr) {}
+    constexpr UniquePtr(nullptr_t) noexcept : ptr_(nullptr) {}
+    explicit UniquePtr(T *p) noexcept : ptr_(p) {}
+
+    UniquePtr(UniquePtr &&o) noexcept : ptr_(o.ptr_) { o.ptr_ = nullptr; }
+
+    UniquePtr &operator=(UniquePtr &&o) noexcept {
+        if (this != &o) { reset(); ptr_ = o.ptr_; o.ptr_ = nullptr; }
+        return *this;
+    }
+
+    UniquePtr(const UniquePtr &) = delete;
+    UniquePtr &operator=(const UniquePtr &) = delete;
+
+    ~UniquePtr() { reset(); }
+
+    T *get() const noexcept { return ptr_; }
+    T *release() noexcept { T *p = ptr_; ptr_ = nullptr; return p; }
+
+    void reset(T *p = nullptr) noexcept {
+        if (ptr_ != p) { delete ptr_; ptr_ = p; }
+    }
+
+    T &operator*() const { return *ptr_; }
+    T *operator->() const noexcept { return ptr_; }
+    explicit operator bool() const noexcept { return ptr_ != nullptr; }
+
+    void swap(UniquePtr &o) noexcept { T *t = ptr_; ptr_ = o.ptr_; o.ptr_ = t; }
+
+private:
+    T *ptr_;
+};
+
+template <typename T, typename... Args>
+UniquePtr<T> make_unique(Args &&...args)
+{
+    return UniquePtr<T>(new T(static_cast<Args &&>(args)...));
+}
+
+template <typename T>
+void swap(UniquePtr<T> &a, UniquePtr<T> &b) noexcept { a.swap(b); }
+
+/* ================================================================== */
+/*  SharedPtr -- shared ownership with reference counting               */
+/* ================================================================== */
+
+namespace detail {
+
+struct shared_count {
+    long strong;
+    long weak;
+    void (*deleter)(void *);
+    explicit shared_count(void (*del)(void *))
+        : strong(1), weak(0), deleter(del) {}
+};
+
+template <typename T>
+void shared_default_delete(void *p) { delete static_cast<T *>(p); }
+
+} // namespace detail
+
+template <typename T>
+class SharedPtr {
+public:
+    constexpr SharedPtr() noexcept : ptr_(nullptr), ctrl_(nullptr) {}
+    constexpr SharedPtr(nullptr_t) noexcept : ptr_(nullptr), ctrl_(nullptr) {}
+
+    template <typename U, typename = enable_if_t<is_convertible<U *, T *>::value>>
+    explicit SharedPtr(U *p)
+        : ptr_(p),
+          ctrl_(new detail::shared_count(detail::shared_default_delete<U>)) {}
+
+    SharedPtr(const SharedPtr &o) noexcept : ptr_(o.ptr_), ctrl_(o.ctrl_) {
+        if (ctrl_) ctrl_->strong++;
+    }
+
+    SharedPtr(SharedPtr &&o) noexcept : ptr_(o.ptr_), ctrl_(o.ctrl_) {
+        o.ptr_ = nullptr; o.ctrl_ = nullptr;
+    }
+
+    template <typename U, typename = enable_if_t<is_convertible<U *, T *>::value>>
+    SharedPtr(const SharedPtr<U> &o) noexcept : ptr_(o.ptr_), ctrl_(o.ctrl_) {
+        if (ctrl_) ctrl_->strong++;
+    }
+
+    template <typename U, typename = enable_if_t<is_convertible<U *, T *>::value>>
+    SharedPtr(SharedPtr<U> &&o) noexcept : ptr_(o.ptr_), ctrl_(o.ctrl_) {
+        o.ptr_ = nullptr; o.ctrl_ = nullptr;
+    }
+
+    ~SharedPtr() { release(); }
+
+    SharedPtr &operator=(const SharedPtr &o) {
+        if (this != &o) { release(); ptr_ = o.ptr_; ctrl_ = o.ctrl_; if (ctrl_) ctrl_->strong++; }
+        return *this;
+    }
+
+    SharedPtr &operator=(SharedPtr &&o) noexcept {
+        if (this != &o) { release(); ptr_ = o.ptr_; ctrl_ = o.ctrl_; o.ptr_ = nullptr; o.ctrl_ = nullptr; }
+        return *this;
+    }
+
+    T *get() const noexcept { return ptr_; }
+    long use_count() const noexcept { return ctrl_ ? ctrl_->strong : 0; }
+    T &operator*() const { return *ptr_; }
+    T *operator->() const noexcept { return ptr_; }
+    explicit operator bool() const noexcept { return ptr_ != nullptr; }
+
+    void reset(T *p = nullptr) noexcept {
+        release();
+        if (p) {
+            ptr_ = p;
+            ctrl_ = new detail::shared_count(detail::shared_default_delete<T>);
+        }
+    }
+
+    void swap(SharedPtr &o) noexcept {
+        T *tp = ptr_; ptr_ = o.ptr_; o.ptr_ = tp;
+        auto *tc = ctrl_; ctrl_ = o.ctrl_; o.ctrl_ = tc;
+    }
+
+    template <typename U, typename... Args>
+    friend SharedPtr<U> make_shared(Args &&...);
+
+private:
+    template <typename U> friend class SharedPtr;
+
+    void release() {
+        if (ctrl_) {
+            ctrl_->strong--;
+            if (ctrl_->strong == 0) {
+                if (ctrl_->deleter && ptr_) ctrl_->deleter(ptr_);
+                if (ctrl_->weak == 0) delete ctrl_;
+            }
+        }
+        ptr_ = nullptr; ctrl_ = nullptr;
+    }
+
+    T *ptr_;
+    detail::shared_count *ctrl_;
+};
+
+template <typename T, typename... Args>
+SharedPtr<T> make_shared(Args &&...args)
+{
+    SharedPtr<T> sp;
+    sp.ptr_ = new T(static_cast<Args &&>(args)...);
+    sp.ctrl_ = new detail::shared_count(detail::shared_default_delete<T>);
+    return sp;
+}
+
+template <typename T>
+void swap(SharedPtr<T> &a, SharedPtr<T> &b) noexcept { a.swap(b); }
+
+} // namespace std
