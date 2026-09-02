@@ -1,0 +1,70 @@
+# xkern Crypto Utility Library
+
+A modular C++ cryptography utility library for kernel use.
+
+## Files
+
+### Core Types
+- `crypto_types.h` - Common types, enums, and constants
+
+### Hashing
+- `crypto_hash.h` / `crypto_hash.cpp` - SHA256, MD5, SHA1, HMAC
+
+### Encryption
+- `crypto_cipher.h` / `crypto_cipher.cpp` - AES-128/256, DES (ECB/CBC/CTR)
+
+### Key Management
+- `crypto_key.h` / `crypto_key.cpp` - Key generation, derivation, RSA keypairs
+
+### Utility
+- `crypto_util.h` / `crypto_util.cpp` - High-level wrapper, base64, hex, PBKDF2
+
+## Features
+
+- SHA256/MD5/SHA1 hashing
+- AES-128/256 encryption (ECB, CBC, CTR modes)
+- DES encryption
+- HMAC authentication
+- Key generation and management
+- PBKDF2 key derivation
+- Base64 encoding/decoding
+- Hex encoding/decoding
+- RSA key pair generation and signing
+- Thread-safe design
+
+## Usage
+
+```cpp
+#include "crypto_util.h"
+
+using namespace xkern::crypto;
+
+// Initialize
+CryptoUtil::initialize();
+
+// Hash
+auto sha256_hash = CryptoUtil::sha256("hello world");
+auto md5_hash = CryptoUtil::md5Hex("hello world");
+
+// Encrypt/Decrypt
+auto key = Key::random(AES_256_KEY_SIZE);
+auto iv = CryptoUtil::generateRandom(AES_BLOCK_SIZE);
+auto encrypted = CryptoUtil::aesEncrypt(key.data(), key.size(),
+                                        iv.data(), iv.size(),
+                                        plaintext, len);
+auto decrypted = CryptoUtil::aesDecrypt(key.data(), key.size(),
+                                        iv.data(), iv.size(),
+                                        encrypted.data(), encrypted.size());
+
+// Base64
+std::string encoded = CryptoUtil::base64Encode(data, len);
+auto decoded = CryptoUtil::base64Decode(encoded);
+
+// Cleanup
+CryptoUtil::cleanup();
+```
+
+## Requirements
+
+- OpenSSL library
+- C++17 or later

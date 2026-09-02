@@ -1,0 +1,21 @@
+#pragma once
+/* Freestanding <new> -- placement new, nothrow */
+
+#include <cstddef>
+
+enum class std::align_val_t : std::size_t {};
+
+struct std::nothrow_t {
+    explicit constexpr nothrow_t() = default;
+};
+constexpr std::nothrow_t nothrow{};
+
+/* Placement new (built-in, declared for header completeness) */
+inline void *operator new(std::size_t size, void *ptr) noexcept { return ptr; }
+inline void *operator new[](std::size_t size, void *ptr) noexcept { return ptr; }
+
+/* Aligned new / delete */
+void *operator new(std::size_t size, std::align_val_t align);
+void *operator new[](std::size_t size, std::align_val_t align);
+void  operator delete(void *ptr, std::size_t, std::align_val_t) noexcept;
+void  operator delete[](void *ptr, std::size_t, std::align_val_t) noexcept;

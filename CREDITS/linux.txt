@@ -1,0 +1,74 @@
+===============================================================================
+LINUX KERNEL USB SUBSYSTEM - DESIGN INSPIRATION NOTICE
+===============================================================================
+
+This project's USB subsystem implementation was inspired by the Linux kernel
+USB stack architecture and design patterns.
+
+--------------------------------------------------------------------------------
+ACKNOWLEDGMENT
+--------------------------------------------------------------------------------
+
+The Linux kernel USB subsystem was developed by:
+
+  Linus Torvalds
+  Greg Kroah-Hartman
+  Alan Stern
+  David Brownell
+  And many other Linux kernel contributors
+
+Copyright (C) 1996-2026 Linux Foundation and contributors.
+
+--------------------------------------------------------------------------------
+SOURCE REFERENCE
+--------------------------------------------------------------------------------
+
+Linux kernel source code is available at:
+  https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/
+
+Linux USB documentation:
+  https://www.kernel.org/doc/html/latest/driver-api/usb/
+
+--------------------------------------------------------------------------------
+LICENSE STATUS
+--------------------------------------------------------------------------------
+
+The Linux kernel is released under the GNU General Public License, version 2
+(GPL-2.0), with the syscall exception.
+
+Full license text:
+  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+--------------------------------------------------------------------------------
+DISCLAIMER
+--------------------------------------------------------------------------------
+
+THIS PROJECT DOES NOT CONTAIN OR DISTRIBUTE ANY CODE FROM THE LINUX KERNEL.
+
+The implementation in this project is a CLEAN-ROOM implementation, developed
+independently based on:
+
+  1. Publicly available USB specifications (USB-IF)
+  2. Observing high-level architectural patterns from Linux
+  3. Industry-standard USB driver design principles
+
+No Linux kernel source code has been copied, translated, or derived from
+in the creation of this project's USB subsystem.
+
+This project is NOT affiliated with, endorsed by, or sponsored by the
+Linux Foundation, Linus Torvalds, or any Linux kernel developers.
+
+--------------------------------------------------------------------------------
+PURPOSE OF THIS NOTICE
+--------------------------------------------------------------------------------
+
+This notice is provided solely to give proper attribution to the Linux
+kernel community for their pioneering work in USB stack design, which
+serves as an educational reference and inspiration for embedded systems
+developers worldwide.
+
+--------------------------------------------------------------------------------
+Date: August 31, 2026
+Project: xkern
+Contact: <unimportant@for.now>
+--------------------------------------------------------------------------------
