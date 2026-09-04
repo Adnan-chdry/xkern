@@ -1,3 +1,7 @@
+/*
+ * outdated unused legecy logging system not needed
+ * but still present for future use
+ */
 #include "logger.h"
 #include "printf.h"
 #include "klibc.h"

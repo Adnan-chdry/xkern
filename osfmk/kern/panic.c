@@ -5,7 +5,7 @@
 */
 #include <stdint.h>
 #include <klog.h>
-#include "cpu.h"
+#include "../../pexpert/x86_64/cpu.h"
 #include <kernel.h>
 #include "init_ram_getty.h"
 #include <pic.h>
@@ -132,6 +132,11 @@ static void panic_page_tables(u64 fault_addr)
 
 void panic(const char *msg)
 {
+    /*cpu related routines*/
+    cpu_info_t cpu;
+    cpu_get_info(&cpu);
+
+    /*other*/
     u64 caller = (u64)__builtin_return_address(0);
     u8 irq_m = 0, irq_s = 0;
 
@@ -174,6 +179,7 @@ void panic(const char *msg)
 
     klibc.printf("OS version: %s\n", osrelease);
     klibc.printf("Kernel version: %s\n", version);
+    klibc.printf("proccesor <%s::%s>\n",cpu.vendor,cpu.name);
     klibc.printf("kArch: %s\n",arch);
     klog_lvl(KLOG_EMERG, "kernel", "panic: %s - system halted", msg ? msg : "?");
 
@@ -183,6 +189,7 @@ void panic(const char *msg)
     tsc_disable();                          /* no timestamps past this point */
 
     for (;;)
+        asm volatile ("cli");
         asm volatile ("hlt");
 }
 

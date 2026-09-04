@@ -22,14 +22,28 @@ CFLAGS_COMMON = -m64 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra 
           -mno-red-zone -MMD -MP \
           -Iiokit/IOUSBFamily/core -Iiokit/IOUSBFamily/hid \
            -Idevkits -Idevkits/xkos_gui/widget -Idevkits/xkos_gui/dbus -Idevkits/xkos_gui/de \
-           -I. -Iapi -Ilibkern/libcpp
+           -I. -Iapi -Ilibkern/libcpp \
+           -Wno-unused-parameter \
+           -Wno-unused-function\
+           -Wno-unused-variable\
+           -Wno-sign-compare\
+           -Wno-format \
+           -Wno-int-to-pointer-cast \
+           -Wno-unused-but-set-variable \
+           -Wno-unterminated-string-initialization \
+           -Wno-cast-function-type \
+           -Wno-pointer-to-int-cast
+
 CFLAGS   = $(CFLAGS_COMMON) -std=gnu11 \
            -Wno-implicit-function-declaration -Wno-implicit-int -Wno-conflicting-types \
            -Wno-incompatible-pointer-types -Wno-int-conversion
 CXX     = g++
 # C++ kernel features: freestanding, no RTTI/exceptions (no libstdc++ runtime
 # in the kernel).
-CXXFLAGS = $(CFLAGS_COMMON) -std=c++20 -fno-rtti -fno-exceptions
+CXXFLAGS = $(CFLAGS_COMMON) -std=c++20 -fno-rtti -fno-exceptions -Wno-unterminated-string-initialization -Wno-pointer-to-int-cast -Wno-comment \
+            -Wno-volatile -Wno-conflicting-types
+
+
 DEPFILES = $(OBJS:.o=.d)
 ASFLAGS = -f elf64
 LDFLAGS = -m elf_x86_64 -T linker.ld
@@ -47,7 +61,7 @@ DRV_OBJS  = osfmk/console/vga.o osfmk/console/serial.o libkern/libkern/klog.o li
 KERN_OBJS = osfmk/kern/main.o osfmk/kern/version.o osfmk/kern/sh.o osfmk/kern/dinit.o osfmk/kern/panic.o \
             iokit/IOGraphicsFamily/fb.o iokit/IOGraphicsFamily/font9x8.o iokit/IOGraphicsFamily/font6x12.o \
             iokit/IOGraphicsFamily/font.o iokit/IOGraphicsFamily/buffer.o iokit/IOServiceFamily/io_service.o
-GAME_OBJS = game/gfx.o game/input.o game/engine.o game/demo.o game/pizza.o game/doom.o pexpert/hw-report.o
+GAME_OBJS = game/gfx.o game/input.o game/engine.o game/demo.o game/pizza.o game/doom.o pexpert/hw-report.o pexpert/x86_64/cpu.o
 include devkits/gpukit/lvgl/Makefile
 LVGL_OBJ := $(LVGL_SRC:.c=.o)
 
@@ -335,4 +349,13 @@ qemu: $(TARGET).iso
 	$(Q)echo "QEMU    $<"
 	$(Q)qemu-system-x86_64 -cdrom $(TARGET).iso
 
-.PHONY: all clean run qemu run-initrd usb-run usb-run-xhci usb-run-all xkutil iso payload gen_ver install-headers
+
+help:
+	@echo "all - does all"
+	@echo "clean - cleans build files"
+	@echo "run - runs the kernel with 4 threads"
+	@echo "iso - generates iso"
+	@echo "gen_ver - generates version.c"
+	@echo "install-headers - installs header files to /usr/include/xkern/"
+
+.PHONY: all clean run qemu run-initrd usb-run usb-run-xhci usb-run-all xkutil iso payload gen_ver install-headers help
