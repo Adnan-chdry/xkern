@@ -70,8 +70,6 @@ void kernel_main(u64 mbi_phys)
     dinit_init();
     gdt_details();
 
-    /* crypto subsystem: self-test SHA-256 + AES-256 */
-
     //start of fb mbi
     klibc.printf("Multiboot2 info: 0x%lx\n",
            (unsigned long)mbi_phys);
@@ -85,26 +83,18 @@ void kernel_main(u64 mbi_phys)
         klibc.printf("Framebuffer flag NOT SET\n");
     }
 
-    //end of fb mbi
     cpu_init();
     klibc.printf("::Target kernel_framebuff_init()\n");
     kernel_framebuff_init(&saved_mbi);
-
-    /* lv_console built its text on console1 — restore the splash */
     restore_console0();
-
-    //comment acpi if the kernel is crashing
-    //acpi init routine causes crash fix 1:0 {first problem found cause of framebuffer}
     acpi_init();
     initram_reserve();
-    //sector 2 uses 0x80
-
     pic_init();
     idt_init();
     smp_init();
     syscall_init();
     pit_register_irq();
-    atkbd_register_irq();
+    //atkbd_register_irq();
     kernel_fpu_init(); //fpu.c
     klog("Kernel","proc_done");
     klog("crypto","cryptography proc has started");
@@ -159,34 +149,27 @@ void __init(){
     hw_report_scan();
 
     //  re-enable it when not testing in a real machine
-    atmouse_init();
-    atmouse_register_irq();
+   // atmouse_init();
+  //  atmouse_register_irq();
 
 
 
     //developer service registry: start everything registered so far
     io_service_init();
-    //network stack included 
-    io_service_register(&ionet_service);
+    //network stack included
+    //io_service_register(&ionet_service);
     io_service_start_all();
 
     //xk install demo
     klog("kernel.RootKit.GPUkit.xrecovery","xrecovery_run() on work");
     klog("kernel.RootKit.GPUkit.xrecovery","xrecovery_run(fail) on intention 126-127{main.c}");
-  // if (xrecovery_run() == XRECOVERY_DESKTOP)
- //       xdesktop_run();
-    //not needed
-    // sh_main();
-
-    /* XKOS GUI: bring up the D-Bus bus and launch the full DE.
-     * The DE runs until the user presses ESC, then returns here. */
-    //xkos_de_init();
-    //xkos_de_run();
 
        /* switch from console0 (plymouth splash) to console1 (kernel text) */
     switch_console();
   __klog("kernel","all proc done\n");
-    initram_getty_init(&g_initram_fs);
+  if (lv_console_active()) //for the screen push
+      lv_console_settle();
+   // initram_getty_init(&g_initram_fs);
     panic("unexepected reason");
 }
 
