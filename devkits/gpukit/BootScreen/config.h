@@ -45,6 +45,10 @@
 
 /* 13. plymouth master toggle: 1 = show splash, 0 = skip it (kernel testing /
  *     full debug log on screen from the very start). */
-#define BOOT_ENABLE_PLYMOUTH 0
+#define BOOT_ENABLE_PLYMOUTH 1
+
+/* 14. disable console switch: 1 = stay on console0 (plymouth) forever,
+ *     0 = switch to console1 (kernel text) when kernel_main is ready. */
+#define BOOT_DISABLE_CONSOLE_SWITCH 1
 
 #endif /* BOOT_CONFIG_H */

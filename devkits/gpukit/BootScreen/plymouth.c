@@ -7,7 +7,8 @@
  *  Config driven by config.h (12 hardcoded values for now).
  *  xkern 26.0.8
  */
-
+#include <xkern/devkits/gpukit/lvgl/src/lv_conf_internal.h>
+#include <xkern/osfmk/kern/version.h> //from /usr/include/xkern
 #include "plymouth.h"
 #include "config.h"
 #include "lv_port.h"
@@ -15,6 +16,12 @@
 #include "tsc.h"
 #include "klog.h"
 #include "IOGraphicsFamily/fb.h"
+
+
+/*==================================================================*/
+
+/*==================================================================*/
+
 
 /* ===================================================================== */
 /*  Helpers                                                               */
@@ -28,11 +35,57 @@ static void center_obj(lv_obj_t *obj, lv_coord_t cx, lv_coord_t cy)
     lv_obj_set_pos(obj, cx - w / 2, cy - h / 2);
 }
 
+void plymouth_d_print(const char *msg)
+{
+    lv_obj_t *scr = lv_scr_act();
+    if (!scr || !msg)
+        return;
+
+    lv_obj_t *bg = lv_obj_create(scr);
+    lv_obj_set_size(bg, lv_pct(100), lv_pct(100));
+    lv_obj_set_style_bg_color(bg, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_opa(bg, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bg, 0, 0);
+    lv_obj_set_style_radius(bg, 0, 0);
+    lv_obj_clear_flag(bg, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_coord_t sw = lv_obj_get_width(scr);
+    lv_coord_t sh = lv_obj_get_height(scr);
+
+    lv_obj_t *title = lv_label_create(bg);
+    lv_label_set_text(title, "KERNEL PANIC");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(title, lv_color_hex(0x8B0000), 0);
+    center_obj(title, sw / 2, sh / 2 - 40);
+
+    lv_obj_t *line = lv_label_create(bg);
+    lv_label_set_text(line, "-----------------------------------");
+    lv_obj_set_style_text_color(line, lv_color_hex(0x660000), 0);
+    center_obj(line, sw / 2, sh / 2 - 10);
+
+    lv_obj_t *msgk = lv_label_create(bg);
+    lv_label_set_text(msgk, msg);
+    lv_obj_set_style_text_font(msgk, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(msgk, lv_color_hex(0x990000), 0);
+    lv_label_set_long_mode(msgk, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(msgk, sw - 80);
+    center_obj(msgk, sw / 2, sh / 2 + 30);
+
+    lv_obj_t *hint = lv_label_create(bg);
+    lv_label_set_text(hint, "System halted.");
+    lv_obj_set_style_text_font(hint, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(hint, lv_color_hex(0x660000), 0);
+    center_obj(hint, sw / 2, sh / 2 + 80);
+
+    lv_refr_now(NULL);
+}
+
+
 /* ===================================================================== */
 /*  Build widget tree                                                     */
 /* ===================================================================== */
 
-static void build_screen(void)
+void build_screen(void)	//removed static label
 {
     lv_obj_t *scr;
     lv_coord_t sw = (lv_coord_t)framebuffer_width();
@@ -80,6 +133,13 @@ static void build_screen(void)
     center_obj(spinner, cx,
                lv_obj_get_y(title) + lv_obj_get_height(title)
                + gap + spinner_dia / 2);
+    //pointer to sub
+    lv_obj_t *sub = lv_label_create(scr);
+    lv_label_set_text(sub,"test plymouth"); //cant use variable based ones const required
+    lv_obj_set_style_text_font(sub, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(sub, lv_color_hex(0xf2e1b3), 0);
+    lv_obj_set_style_text_opa(sub, LV_OPA_COVER, 0);
+    center_obj(sub, cx, cy);
 }
 
 /* ===================================================================== */

@@ -3,6 +3,7 @@
     in future the log will be exported to the blk device
     !!kernel family
 */
+#include <xkern/devkits/gpukit/lvgl/lvgl.h>
 #include <stdint.h>
 #include <klog.h>
 #include "../../pexpert/x86_64/cpu.h"
@@ -85,46 +86,153 @@ static void panic_backtrace(void)
     }
 }
 
+static void print_pte_reason(u64 entry, const char *level)
+{
+    if (!(entry & 0x001))
+        klibc.printf(" (not-present)");
+    else {
+        klibc.printf(" (present");
+
+        if (entry & (1ULL << 1))
+            klibc.printf(", writable");
+        else
+            klibc.printf(", read-only");
+
+        if (entry & (1ULL << 2))
+            klibc.printf(", user");
+        else
+            klibc.printf(", supervisor");
+
+        if (entry & (1ULL << 5))
+            klibc.printf(", accessed");
+
+        if (entry & (1ULL << 6))
+            klibc.printf(", dirty");
+
+        if (entry & (1ULL << 7)) {
+            if (!__builtin_strcmp(level, "PDE"))
+                klibc.printf(", 2MiB-page");
+            else if (!__builtin_strcmp(level, "PDPTE"))
+                klibc.printf(", 1GiB-page");
+            else
+                klibc.printf(", PS");
+        }
+
+        if (entry & (1ULL << 63))
+            klibc.printf(", NX");
+
+        klibc.printf(")");
+    }
+}
 
 static void panic_page_tables(u64 fault_addr)
 {
     u64 cr3 = read_cr3();
-    u64 a = PML4_INDEX(fault_addr), b = PDPT_INDEX(fault_addr);
-    u64 c = PD_INDEX(fault_addr), d = PT_INDEX(fault_addr);
+
+    u64 a = PML4_INDEX(fault_addr);
+    u64 b = PDPT_INDEX(fault_addr);
+    u64 c = PD_INDEX(fault_addr);
+    u64 d = PT_INDEX(fault_addr);
+
     u64 *pml4 = (u64 *)(cr3 & ~0xFFFULL);
 
-    klibc.printf("CR2 (fault address): <0x%016lx>\n", (unsigned long)fault_addr);
-    klibc.printf("CR3 (PML4 phys):     <0x%016lx>\n", (unsigned long)cr3);
+    klibc.printf("CR2 (fault address): <0x%016lx> (faulting virtual address)\n",
+                 (unsigned long)fault_addr);
+
+    klibc.printf("CR3 (PML4 phys):     <0x%016lx> (PML4 physical base)\n",
+                 (unsigned long)cr3);
+
+    klibc.printf("Indexes: PML4=%lu PDPT=%lu PD=%lu PT=%lu\n",
+                 a, b, c, d);
 
     klibc.printf("PML4E[0..7]:\n");
-    for (u64 i = 0; i < 8; i++)
-        klibc.printf("  PML4E[%lu] = <0x%016lx>\n", i, pml4[i]);
 
-    if (!(pml4[a] & 1)) {
-        klibc.printf("  PML4[%lu] not present - CR2 region unmapped\n", a);
+    for (u64 i = 0; i < 8; i++) {
+        klibc.printf("  PML4E[%lu] = <0x%016lx>",
+                     i, pml4[i]);
+
+        print_pte_reason(pml4[i], "PML4E");
+
+        klibc.printf("\n");
+    }
+
+    u64 pml4e = pml4[a];
+
+    if (!(pml4e & 1)) {
+        klibc.printf(
+            "  PML4[%lu] not present - CR2 region unmapped\n",
+            a);
         return;
     }
 
-    u64 *pdpt = (u64 *)(pml4[a] & ~0xFFFULL);
-    if (!(pdpt[b] & 1)) {
+    u64 *pdpt = (u64 *)(pml4e & ~0xFFFULL);
+
+    u64 pdpte = pdpt[b];
+
+    klibc.printf("  PDPTE[%lu] = <0x%016lx>",
+                 b, pdpte);
+
+    print_pte_reason(pdpte, "PDPTE");
+
+    klibc.printf("\n");
+
+    if (!(pdpte & 1)) {
         klibc.printf("  PDPT[%lu] not present\n", b);
         return;
     }
-    klibc.printf("  PDPTE[%lu] = <0x%016lx>\n", b, pdpt[b]);
 
-    u64 *pd = (u64 *)(pdpt[b] & ~0xFFFULL);
-    if (!(pd[c] & 1)) {
-        klibc.printf("  PDE  [%lu] not present\n", c);
+    /*
+     * 1 GiB huge page.
+     */
+    if (pdpte & (1ULL << 7)) {
+        klibc.printf(
+            "  CR2 is covered by a 1GiB page (PDPTE.PS=1)\n");
         return;
     }
-    klibc.printf("  PDE  [%lu] = <0x%016lx%s>\n",
-                 c, pd[c], (pd[c] & 0x80) ? " (2MiB)" : "");
 
-    if (!(pd[c] & 0x80)) {
-        u64 *pt = (u64 *)(pd[c] & ~0xFFFULL);
-        klibc.printf("  PTE  [%lu] = <0x%016lx>\n", d, pt[d]);
+    u64 *pd = (u64 *)(pdpte & ~0xFFFULL);
+
+    u64 pde = pd[c];
+
+    klibc.printf("  PDE[%lu] = <0x%016lx>",
+                 c, pde);
+
+    print_pte_reason(pde, "PDE");
+
+    klibc.printf("\n");
+
+    if (!(pde & 1)) {
+        klibc.printf("  PDE[%lu] not present\n", c);
+        return;
+    }
+
+    /*
+     * 2 MiB huge page.
+     */
+    if (pde & (1ULL << 7)) {
+        klibc.printf(
+            "  CR2 is covered by a 2MiB page (PDE.PS=1)\n");
+        return;
+    }
+
+    u64 *pt = (u64 *)(pde & ~0xFFFULL);
+
+    u64 pte = pt[d];
+
+    klibc.printf("  PTE[%lu] = <0x%016lx>",
+                 d, pte);
+
+    print_pte_reason(pte, "PTE");
+
+    klibc.printf("\n");
+
+    if (!(pte & 1)) {
+        klibc.printf(
+            "  PTE[%lu] not present - CR2 is unmapped\n",
+            d);
     }
 }
+
 
 /* ------------------------------------------------------------------ */
 /*  panic                                                             */
@@ -186,6 +294,7 @@ void panic(const char *msg)
     /* push the console fully to the bottom before execution stops */
     if (lv_console_active())
         lv_console_settle();
+    lvgl_panic(msg);
     tsc_disable();                          /* no timestamps past this point */
 
     for (;;)
@@ -205,4 +314,7 @@ void exc_page_fault(u64 eip, u64 cr2)
     }
     klog("exc", "page fault rip=%llx cr2=%llx pid=%x sp=%llx cr3=%llx stack=%llx",
          eip, cr2, t ? t->pid : 0xffffffffu, esp, cr3, stk);
+}
+void lvgl_panic(const char *msg){
+	plymouth_d_print(msg ? msg : "unknown panic");
 }

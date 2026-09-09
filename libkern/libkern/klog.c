@@ -23,7 +23,7 @@ static void klog_emit(int prio, const char *driver, const char *buf)
 
     char line[352];
     klibc.snprintf(line, sizeof(line),
-                   "%02u:%02u:%02u.%03u xkern kernel[0] <%s>: com.xkern.%s: %s\n",
+                   "%02u:%02u:%02u.%03u xkern kernel<0> <%s>: com.xkern.%s: %s\n",
                    ms / 3600000u, (ms / 60000u) % 60u, (ms / 1000u) % 60u,
                    ms % 1000u,
                    level, driver, buf);
