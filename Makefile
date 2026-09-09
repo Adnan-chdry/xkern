@@ -100,7 +100,7 @@ KLIB_OBJS = libkern/libkern/stdint.o libkern/libkern/stdarg.o libkern/libkern/pr
             libkern/libkern/udivdi3.o \
             libkern/libkern/float.o \
             libkern/libkern/math.o \
-
+            osfmk/kern/progbar.o
 APTIC_OBJS = $(patsubst %.at,%.o,$(wildcard xom/*.at))
 
 #kernel CXX objects
@@ -160,7 +160,7 @@ CPP_OBJS = libkern/libcpp/demo.o libkern/libcpp/runtime.o iokit/IOPCIFamily/gene
 OBJS = $(BOOT_OBJS) $(CPU_OBJS) $(MEM_OBJS) $(DRV_OBJS) $(KERN_OBJS) $(KLIB_OBJS) \
        $(GAME_OBJS) $(LVGL_OBJ) $(GPUKIT_OBJS) $(XENV_OBJS) $(XKOS_GUI_OBJS) \
         $(IO_MAIN_OBJ) $(ATA_OBJS) $(SATA_OBJS) $(AHCI_OBJS) $(NVME_OBJS) $(SSD_OBJS) \
-       $(DEVFS_OBJS) $(IOPCI_OBJS) $(IONET_OBJS) $(HDA_OBJS)        $(IOTIME_OBJS) $(INITRAM_OBJS) $(ELF_OBJS) $(SMP_OBJS) \
+       $(DEVFS_OBJS) $(IOPCI_OBJS) $(IONET_OBJS) $(HDA_OBJS) $(AC97_OBJS) $(IOTIME_OBJS) $(INITRAM_OBJS) $(ELF_OBJS) $(SMP_OBJS) \
        $(BSD_DEVFS_OBJS) \
         $(EXT3_OBJS) \
         $(RAMFS_OBJS) \
@@ -343,7 +343,7 @@ clean:
 
 run: $(TARGET).iso
 	$(Q)echo "QEMU    $< (GRUB BIOS boot, 4 CPUs)"
-	$(Q)qemu-system-x86_64 -smp 4 -cdrom $(TARGET).iso -serial stdio
+	$(Q)qemu-system-x86_64 -cdrom $(TARGET).iso -serial stdio
 
 qemu: $(TARGET).iso
 	$(Q)echo "QEMU    $<"

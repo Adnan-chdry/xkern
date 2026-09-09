@@ -8,5 +8,6 @@
 
 /* Run the boot splash (blocks for BOOT_MIN_DURATION ms). */
 void plymouth_run(void);
+void plymouth_d_print(const char *msg);
 
 #endif /* PLYMOUTH_H */

@@ -5,6 +5,7 @@
                                                       ~ openArc-1
  **/
 
+#include "progbar.h"
 #include "uni.h" /*includes all the header files */
 #include "klibc.h"
 #include "game.h"
@@ -14,6 +15,7 @@
 #include "xdesktop.h"
 #include "gpukit/lv_console.h"
 #include "boot.h"
+#include "config.h"
 #include "xkos_gui/dbus/dbus.h"
 #include "xkos_gui/de/xkos_de.h"
 #include <hw-report.h>
@@ -143,6 +145,7 @@ void __init(){
     true_smbios_init();
     pci_scan();
     usb_setup(); //requires pci_scan();
+    io_storage_init();
     pci_list();
 
     /* scan hardware and populate /dev nodes */
@@ -157,7 +160,7 @@ void __init(){
     //developer service registry: start everything registered so far
     io_service_init();
     //network stack included
-    //io_service_register(&ionet_service);
+    io_service_register(&ionet_service);
     io_service_start_all();
 
     //xk install demo
@@ -165,7 +168,9 @@ void __init(){
     klog("kernel.RootKit.GPUkit.xrecovery","xrecovery_run(fail) on intention 126-127{main.c}");
 
        /* switch from console0 (plymouth splash) to console1 (kernel text) */
+#if !BOOT_DISABLE_CONSOLE_SWITCH
     switch_console();
+#endif
   __klog("kernel","all proc done\n");
   if (lv_console_active()) //for the screen push
       lv_console_settle();
@@ -184,7 +189,15 @@ void true_smbios_init(){
     }
 }
 
+void prog_demo(){
+    progbar_init("loading",100);
+    for (unsigned int i = 0; i <= 100; i++) {
+           /* Do actual work here... */
 
+           progbar_update(i);
+       }
+    progbar_finish();
+}
 
 /*
   framebuffer design

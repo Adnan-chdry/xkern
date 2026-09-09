@@ -8,6 +8,7 @@
 #include "devfs/devfs.h"
 #include "IOPCIFamily/pci.h"
 #include "IOAudioFamily/hda.h"
+#include "IOAudioFamily/ac97.h"
 #include "klibc.h"
 
 static int g_loop_count;
@@ -67,6 +68,7 @@ void io_storage_init(){
     nvme_init();
     ssd_init();
     hda_init();
+    ac97_init();
     devfs_list();
 
     klog("IOstorage","io_storage_init() done");
